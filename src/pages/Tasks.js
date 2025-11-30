@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { tasksAPI } from '../services/api';
-import { projectsAPI } from '../services/api';
+import { useCallback, useEffect, useState } from 'react';
 import TaskDetail from '../components/TaskDetail';
+import { projectsAPI, tasksAPI } from '../services/api';
 import './Projects.css';
 
 const Tasks = () => {
@@ -15,20 +14,23 @@ const Tasks = () => {
     loadProjects();
   }, []);
 
-  useEffect(() => {
-    if (selectedProject) {
-      loadTasks();
-    } else {
-      setTasks([]);
-    }
-  }, [selectedProject]);
-
   const loadProjects = async () => {
     try {
       const response = await projectsAPI.getAll();
-      setProjects(response.data);
-      if (response.data.length > 0) {
-        setSelectedProject(response.data[0].id.toString());
+      const payload = response.data;
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload.projects)) {
+        items = payload.projects;
+      } else if (Array.isArray(payload.data)) {
+        items = payload.data;
+      } else {
+        items = [];
+      }
+      setProjects(items);
+      if (items.length > 0) {
+        setSelectedProject(items[0].id.toString());
       }
     } catch (error) {
       console.error('Error loading projects:', error);
@@ -37,14 +39,33 @@ const Tasks = () => {
     }
   };
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     try {
       const response = await tasksAPI.getByProject(selectedProject);
-      setTasks(response.data);
+      const payload = response.data;
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload.tasks)) {
+        items = payload.tasks;
+      } else if (Array.isArray(payload.data)) {
+        items = payload.data;
+      } else {
+        items = [];
+      }
+      setTasks(items);
     } catch (error) {
       console.error('Error loading tasks:', error);
     }
-  };
+  }, [selectedProject]);
+
+  useEffect(() => {
+    if (selectedProject) {
+      loadTasks();
+    } else {
+      setTasks([]);
+    }
+  }, [selectedProject, loadTasks]);
 
   if (loading) {
     return <div className="container">Loading...</div>;
@@ -52,20 +73,25 @@ const Tasks = () => {
 
   return (
     <div className="container">
-      <h1>Tasks</h1>
-      <div className="form-group" style={{ maxWidth: '300px', marginBottom: '20px' }}>
-        <label>Select Project</label>
-        <select
-          value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
-        >
-          <option value="">Select a project</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
+      <div className="page-header">
+        <h1>Tasks</h1>
+      </div>
+
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div className="form-group">
+          <label>Select Project</label>
+          <select
+            value={selectedProject}
+            onChange={(e) => setSelectedProject(e.target.value)}
+          >
+            <option value="">Select a project</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {selectedProject && (

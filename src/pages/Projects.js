@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectsAPI } from '../services/api';
 import './Projects.css';
@@ -25,7 +25,18 @@ const Projects = () => {
   const loadProjects = async () => {
     try {
       const response = await projectsAPI.getAll();
-      setProjects(response.data);
+      const payload = response.data;
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload.projects)) {
+        items = payload.projects;
+      } else if (Array.isArray(payload.data)) {
+        items = payload.data;
+      } else {
+        items = [];
+      }
+      setProjects(items);
     } catch (error) {
       console.error('Error loading projects:', error);
     } finally {

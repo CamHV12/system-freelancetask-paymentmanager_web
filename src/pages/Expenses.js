@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { expensesAPI, projectsAPI } from '../services/api';
 import './Projects.css';
 
@@ -26,7 +26,18 @@ const Expenses = () => {
   const loadExpenses = async () => {
     try {
       const response = await expensesAPI.getAll();
-      setExpenses(response.data);
+      const payload = response.data;
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload.expenses)) {
+        items = payload.expenses;
+      } else if (Array.isArray(payload.data)) {
+        items = payload.data;
+      } else {
+        items = [];
+      }
+      setExpenses(items);
     } catch (error) {
       console.error('Error loading expenses:', error);
     } finally {
@@ -101,10 +112,10 @@ const Expenses = () => {
     return <div className="container">Loading...</div>;
   }
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + (Number(exp?.amount) || 0), 0);
   const reimbursableTotal = expenses
     .filter(exp => exp.reimbursable)
-    .reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    .reduce((sum, exp) => sum + (Number(exp?.amount) || 0), 0);
 
   return (
     <div className="container">
@@ -261,7 +272,7 @@ const Expenses = () => {
                     </span>
                   </td>
                   <td>{expense.project?.name || 'N/A'}</td>
-                  <td>${expense.amount?.toFixed(2) || '0.00'}</td>
+                  <td>${(Number(expense?.amount) || 0).toFixed(2)}</td>
                   <td>{expense.reimbursable ? '✓' : '✗'}</td>
                   <td>
                     <button className="btn btn-primary">View</button>

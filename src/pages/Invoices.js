@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoicesAPI } from '../services/api';
 import './Projects.css';
@@ -15,7 +15,18 @@ const Invoices = () => {
   const loadInvoices = async () => {
     try {
       const response = await invoicesAPI.getAll();
-      setInvoices(response.data);
+      const payload = response.data;
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload.invoices)) {
+        items = payload.invoices;
+      } else if (Array.isArray(payload.data)) {
+        items = payload.data;
+      } else {
+        items = [];
+      }
+      setInvoices(items);
     } catch (error) {
       console.error('Error loading invoices:', error);
     } finally {

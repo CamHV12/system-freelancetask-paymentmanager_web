@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { clientsAPI } from '../services/api';
 import './Projects.css';
 
@@ -24,7 +24,18 @@ const Clients = () => {
   const loadClients = async () => {
     try {
       const response = await clientsAPI.getAll();
-      setClients(response.data);
+      const payload = response.data;
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload.clients)) {
+        items = payload.clients;
+      } else if (Array.isArray(payload.data)) {
+        items = payload.data;
+      } else {
+        items = [];
+      }
+      setClients(items);
     } catch (error) {
       console.error('Error loading clients:', error);
     } finally {
